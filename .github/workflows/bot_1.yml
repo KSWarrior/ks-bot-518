@@ -30,16 +30,13 @@ jobs:
       - name: Create Bot File with Leading Spaces
         shell: bash
         run: |
-          cat > ks-bot.js <<'EOF'
-           // Install packages first:
-           // npm install mineflayer mineflayer-pathfinder
-
+          cat > ks-bot.js <<'EOF
            const mineflayer = require('mineflayer');
            const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 
            // ---- CONFIG ----
-           const SERVER = 'your_server_ip'; // e.g., 'aerio_smp.aternos.me'
-           const PORT = 25565; // Minecraft server port
+           const SERVER = 'aerio_smp.aternos.me'; // e.g., 'aerio_smp.aternos.me'
+           const PORT = 29538; // Minecraft server port
            const USERNAME = 'Player1'; // Bot username
            const CHAT_MESSAGES = ["Hello!", "Hi there!", "I'm a bot!", "Beep boop!"]; // Messages bot can send
            const WALK_RADIUS = 10; // Walking radius in blocks
