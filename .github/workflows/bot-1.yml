@@ -16,38 +16,43 @@ concurrency:
 jobs:
   run-mc-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 2   # Max allowed runtime = 15 days
+    timeout-minutes: 1   # GitHub limit for public repos (6h)
 
     steps:
+    # --- Checkout repository ---
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    # --- Setup Node.js ---
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '22'
 
+    # --- Create Bot Script ---
     - name: Create Bot File
       run: |
         cat > ks-bot.js <<'EOF'
         const mineflayer = require('mineflayer')
-        const { pathfinder, Movements, goals } = require('mineflayer-pathfinder')
+        const { pathfinder, goals } = require('mineflayer-pathfinder')
 
         function createBot() {
           const bot = mineflayer.createBot({
             host: 'aerio_smp.aternos.me',
             port: 29538,
-            username: 'Player1',
-            version: '1.21.4'
+            username: process.env.MC_EMAIL,   // Microsoft login email
+            password: process.env.MC_PASSWORD, // Microsoft login password
+            auth: 'microsoft',
+            version: '1.21.5'  // Match your Aternos server version
           })
 
           bot.loadPlugin(pathfinder)
 
           bot.on('spawn', () => {
             console.log(`${bot.username} has joined the server!`)
-            bot.chat(`Hello, I am ${bot.username}! a bot by ks_warrior`)
+            bot.chat(`Hello, I am ${bot.username}, a bot by ks_warrior!`)
 
-            // Anti-AFK every 30s
+            // Anti-AFK
             setInterval(() => {
               const actions = [
                 () => bot.setControlState('jump', true),
@@ -56,8 +61,7 @@ jobs:
                 () => bot.setControlState('forward', false),
                 () => bot.look(Math.random() * 360, 0, true)
               ]
-              const action = actions[Math.floor(Math.random() * actions.length)]
-              action()
+              actions[Math.floor(Math.random() * actions.length)]()
             }, 30000)
           })
 
@@ -98,16 +102,21 @@ jobs:
         createBot()
         EOF
 
+    # --- Install Dependencies ---
     - name: Install dependencies
       run: |
         npm init -y
         npm install mineflayer mineflayer-pathfinder
 
+    # --- Start Bot ---
     - name: Start Minecraft Bot
+      env:
+        MC_EMAIL: ${{ secrets.MC_EMAIL }}
+        MC_PASSWORD: ${{ secrets.MC_PASSWORD }}
       run: |
         node ks-bot.js
 
-    # Restart Loop (after job ends)
+    # --- Restart Loop ---
     - name: Restart Workflow
       if: ${{ always() }}
       uses: benc-uk/workflow-dispatch@v1
