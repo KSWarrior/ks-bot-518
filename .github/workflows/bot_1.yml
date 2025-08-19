@@ -35,7 +35,7 @@ jobs:
            const SERVER_HOST = 'ks_warrior_bot.aternos.me';
            const SERVER_PORT = 34150;
            const BOT_USERNAME = process.argv[2] || 'Player5';
-           const RECONNECT_DELAY = 15000; // 10 seconds to reduce rapid reconnects
+           const RECONNECT_DELAY = 5000; // 10 seconds to reduce rapid reconnects
            const AFK_INTERVAL = 20000; // 20 seconds
            let bot;
            let shouldStop = false;
@@ -118,7 +118,7 @@ jobs:
       - name: Start Minecraft Bot (300m runtime)
         shell: bash
         run: |
-          timeout 50s pm2 logs ks-bot --out
+          timeout 500s pm2 logs ks-bot --out
           
       - name: Restart Workflow (every 5h)
         uses: benc-uk/workflow-dispatch@v1
