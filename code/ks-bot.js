@@ -2,10 +2,10 @@ const mineflayer = require('mineflayer');
 const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 
 // === Config ===
-const HOST = 'localhost';     // Your server IP
-const PORT = 25565;           // Your server port
-const USERNAME = 'your@mail.com'; // Or "BotName" if cracked server
-const PASSWORD = 'yourpassword';  // Only if premium
+const HOST = 'aerio_smp.aternos.me';     // Your server IP
+const PORT = 29538;           // Your server port
+const USERNAME = 'Player1'; // Or "BotName" if cracked server
+const PASSWORD = '';  // Only if premium
 
 const RADIUS = 10;       // Walking radius
 const JUMP_INTERVAL = 60 * 1000; // 60 seconds
