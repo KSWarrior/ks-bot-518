@@ -32,74 +32,89 @@ jobs:
         run: |
           cat > ks-bot.js <<'EOF'
            const mineflayer = require('mineflayer');
-           const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 
-           // ---- CONFIG ----
-           const SERVER = 'ks_warrior_bot.aternos.me'; // e.g., 'aerio_smp.aternos.me'
-           const PORT = 34150; // Minecraft server port
-           const USERNAME = 'ks_warrior_op'; // Bot username
-           const CHAT_MESSAGES = ["Hello!", "Hi there!", "I'm a bot!", "Beep boop!"]; // Messages bot can send
-           const WALK_RADIUS = 10; // Walking radius in blocks
-           const WALK_INTERVAL = 15000; // Walk every 15 seconds
-           const JUMP_INTERVAL = 60000; // Jump every 60 seconds
-           // ----------------
+           const SERVER_HOST = 'ks_warrior_bot.aternos.me';
+           const SERVER_PORT = 34150;
+           const BOT_USERNAME = process.argv[2] || 'Player5';
+           const RECONNECT_DELAY = 5000; // ms
+           const AFK_INTERVAL = 20000; // ms
 
            let bot;
+           let shouldStop = false;
 
-           function createBot() {
+           function startBot() {
+            console.log(`🚀 Starting bot "${BOT_USERNAME}" -> ${SERVER_HOST}:${SERVER_PORT}`);
+
             bot = mineflayer.createBot({
-             host: SERVER,
-             port: PORT,
-             username: USERNAME
+             host: SERVER_HOST,
+             port: SERVER_PORT,
+             username: BOT_USERNAME
             });
 
-            bot.loadPlugin(pathfinder);
+            bot.on('login', () => console.log(`✅ Logged in as ${BOT_USERNAME}`));
 
             bot.on('spawn', () => {
-             console.log('Bot spawned!');
-
-             const mcData = require('minecraft-data')(bot.version);
-             const defaultMove = new Movements(bot, mcData);
-             bot.pathfinder.setMovements(defaultMove);
-
-             // Walk randomly every WALK_INTERVAL
-             setInterval(() => {
-              const x = bot.entity.position.x + (Math.random() - 0.5) * WALK_RADIUS * 2;
-              const z = bot.entity.position.z + (Math.random() - 0.5) * WALK_RADIUS * 2;
-              const y = bot.entity.position.y;
-              const goal = new goals.GoalBlock(Math.floor(x), Math.floor(y), Math.floor(z));
-              bot.pathfinder.setGoal(goal);
-             }, WALK_INTERVAL);
-
-             // Jump randomly every JUMP_INTERVAL
-             setInterval(() => {
-              bot.setControlState('jump', true);
-              setTimeout(() => bot.setControlState('jump', false), 500);
-             }, JUMP_INTERVAL);
-
-             // Send random chat every 30 seconds
-             setInterval(() => {
-              const msg = CHAT_MESSAGES[Math.floor(Math.random() * CHAT_MESSAGES.length)];
-              bot.chat(msg);
-             }, 30000);
+             console.log('🏞 Spawned in world');
+             startAntiAFK();
             });
 
             bot.on('end', () => {
-             console.log('Bot disconnected, reconnecting in 5 seconds...');
-             setTimeout(createBot, 5000); // Auto-reconnect
+             console.log('❌ Bot disconnected');
+             if (!shouldStop) {
+              console.log(`🔄 Reconnecting in ${RECONNECT_DELAY / 1000}s...`);
+              setTimeout(startBot, RECONNECT_DELAY);
+             }
             });
 
-            bot.on('error', err => console.log('Error:', err));
+            bot.on('kicked', (reason) => console.log('⚠️ Kicked:', reason));
+            bot.on('error', (err) => console.log('💥 Error:', err.message));
            }
 
-           createBot();
+           function startAntiAFK() {
+            setInterval(() => {
+             if (!bot || !bot.entity) return;
+
+             // Random look
+             const yaw = Math.random() * Math.PI * 2;
+             bot.look(yaw, 0, false);
+
+             // Random movement
+             const actions = ['forward', 'back', 'left', 'right'];
+             const action = actions[Math.floor(Math.random() * actions.length)];
+             bot.setControlState(action, true);
+
+             // Jump occasionally
+             if (Math.random() > 0.7) {
+              bot.setControlState('jump', true);
+              setTimeout(() => bot.setControlState('jump', false), 500);
+             }
+
+             // Stop moving after short delay
+             setTimeout(() => bot.setControlState(action, false), 1000);
+            }, AFK_INTERVAL);
+           }
+
+           // Console commands
+           process.stdin.on('data', (data) => {
+            const cmd = data.toString().trim();
+            if (cmd === 'quit' || cmd === 'stop') {
+             console.log('🛑 Stopping bot...');
+             shouldStop = true;
+             bot.end();
+             process.exit(0);
+            } else if (cmd) {
+             bot.chat(cmd);
+            }
+           });
+
+           startBot();
           EOF
 
       - name: Install dependencies
         shell: bash
         run: |
           npm init -y
-          npm install mineflayer mineflayer-pathfinder minecraft-data
+          npm install mineflayer mineflayer-pathfinder
 
       - name: Start Minecraft Bot (300m runtime)
         shell: bash
