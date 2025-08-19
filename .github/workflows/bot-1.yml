@@ -1,0 +1,117 @@
+name: Minecraft Java Bot No 1 by ks_warrior
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: ks-mc-bot
+  cancel-in-progress: true
+
+jobs:
+  run-mc-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2   # Max allowed runtime = 15 days
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Create Bot File
+      run: |
+        cat > ks-bot.js <<'EOF'
+        const mineflayer = require('mineflayer')
+        const { pathfinder, Movements, goals } = require('mineflayer-pathfinder')
+
+        function createBot() {
+          const bot = mineflayer.createBot({
+            host: 'aerio_smp.aternos.me',
+            port: 29538,
+            username: 'Player1',
+            version: '1.21.8'
+          })
+
+          bot.loadPlugin(pathfinder)
+
+          bot.on('spawn', () => {
+            console.log(`${bot.username} has joined the server!`)
+            bot.chat(`Hello, I am ${bot.username}! a bot by ks_warrior`)
+
+            // Anti-AFK every 30s
+            setInterval(() => {
+              const actions = [
+                () => bot.setControlState('jump', true),
+                () => bot.setControlState('jump', false),
+                () => bot.setControlState('forward', true),
+                () => bot.setControlState('forward', false),
+                () => bot.look(Math.random() * 360, 0, true)
+              ]
+              const action = actions[Math.floor(Math.random() * actions.length)]
+              action()
+            }, 30000)
+          })
+
+          bot.on('chat', (username, message) => {
+            if (username === bot.username) return
+
+            if (message === '!jump') {
+              bot.chat('Jumping!')
+              bot.setControlState('jump', true)
+              setTimeout(() => bot.setControlState('jump', false), 1000)
+            }
+
+            if (message.startsWith('!say ')) {
+              bot.chat(message.slice(5))
+            }
+
+            if (message === '!come') {
+              const player = bot.players[username]?.entity
+              if (player) {
+                bot.chat(`Coming to ${username}`)
+                bot.pathfinder.setGoal(new goals.GoalNear(player.position.x, player.position.y, player.position.z, 1))
+              } else {
+                bot.chat("I can't see you.")
+              }
+            }
+          })
+
+          bot.on('death', () => {
+            console.log('Bot died, waiting to respawn...')
+          })
+
+          bot.on('end', () => {
+            console.log('Bot disconnected, reconnecting in 5s...')
+            setTimeout(createBot, 5000)
+          })
+        }
+
+        createBot()
+        EOF
+
+    - name: Install dependencies
+      run: |
+        npm init -y
+        npm install mineflayer mineflayer-pathfinder
+
+    - name: Start Minecraft Bot
+      run: |
+        node ks-bot.js
+
+    # Restart Loop (after job ends)
+    - name: Restart Workflow
+      if: ${{ always() }}
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: Minecraft Java Bot No 1 by ks_warrior
+        ref: main
+        token: ${{ secrets.GITHUB_TOKEN }}
