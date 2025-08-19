@@ -30,7 +30,7 @@ jobs:
     - name: Create Bot File
       shell: bash
       run: |
-        cat > ks-bot.js <<'EOF'
+cat > ks-bot.js <<'EOF'
 const mineflayer = require('mineflayer');
 const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 
