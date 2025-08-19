@@ -108,15 +108,17 @@ jobs:
         run: |
           npm init -y
           npm install mineflayer mineflayer-pathfinder
+          npm install -g pm2
+          
       - name: Start Minecraft Bot (300m runtime)
         shell: bash
         run: |
-          nohup node ks-bot.js > bot.log 2>&1 &
+          pm2 start ks-bot.js --name ks-bot
 
       - name: Start Minecraft Bot (300m runtime)
         shell: bash
         run: |
-          sleep 5000
+          timeout 50s pm2 logs ks-bot --out
           
       - name: Restart Workflow (every 5h)
         uses: benc-uk/workflow-dispatch@v1
