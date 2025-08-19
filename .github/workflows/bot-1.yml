@@ -16,7 +16,7 @@ concurrency:
 jobs:
   run-mc-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 1   # GitHub limit for public repos (6h)
+    timeout-minutes: 2   # GitHub limit for public repos (6h)
 
     steps:
     # --- Checkout repository ---
@@ -35,15 +35,22 @@ jobs:
         cat > ks-bot.js <<'EOF'
         const mineflayer = require('mineflayer')
         const { pathfinder, goals } = require('mineflayer-pathfinder')
+        const { Authflow } = require('prismarine-auth')
+        const fs = require('fs')
+        const path = require('path')
 
         function createBot() {
+          const cacheDir = path.join(__dirname, '.tokens')
+          if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir)
+
+          const authflow = new Authflow(process.env.MC_EMAIL, cacheDir)
+
           const bot = mineflayer.createBot({
             host: 'aerio_smp.aternos.me',
             port: 29538,
-            username: process.env.MC_EMAIL,   // Microsoft login email
-            password: process.env.MC_PASSWORD, // Microsoft login password
             auth: 'microsoft',
-            version: '1.21.5'  // Match your Aternos server version
+            version: '1.21.5',
+            authflow: authflow
           })
 
           bot.loadPlugin(pathfinder)
@@ -106,13 +113,12 @@ jobs:
     - name: Install dependencies
       run: |
         npm init -y
-        npm install mineflayer mineflayer-pathfinder
+        npm install mineflayer mineflayer-pathfinder prismarine-auth
 
     # --- Start Bot ---
     - name: Start Minecraft Bot
       env:
         MC_EMAIL: ${{ secrets.MC_EMAIL }}
-        MC_PASSWORD: ${{ secrets.MC_PASSWORD }}
       run: |
         node ks-bot.js
 
