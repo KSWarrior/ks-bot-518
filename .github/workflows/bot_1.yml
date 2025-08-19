@@ -35,7 +35,7 @@ jobs:
 
            const SERVER_HOST = 'ks_warrior_bot.aternos.me';
            const SERVER_PORT = 34150;
-           const BOT_USERNAME = process.argv[2] || 'Player1';
+           const BOT_USERNAME = process.argv[2] || 'Player5';
            const RECONNECT_DELAY = 10000; // 10 seconds to reduce rapid reconnects
            const AFK_INTERVAL = 20000; // 20 seconds
 
