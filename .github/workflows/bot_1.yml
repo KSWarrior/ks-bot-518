@@ -1,0 +1,118 @@
+name: Minecraft Java Bot No 1 by ks_warrior
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: ks-mc-bot
+  cancel-in-progress: true
+
+jobs:
+  run-mc-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 305
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Create Bot File with Leading Spaces
+        shell: bash
+        run: |
+          cat > ks-bot.js <<'EOF'
+           // Install packages first:
+           // npm install mineflayer mineflayer-pathfinder
+
+           const mineflayer = require('mineflayer');
+           const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
+
+           // ---- CONFIG ----
+           const SERVER = 'your_server_ip'; // e.g., 'aerio_smp.aternos.me'
+           const PORT = 25565; // Minecraft server port
+           const USERNAME = 'Player1'; // Bot username
+           const CHAT_MESSAGES = ["Hello!", "Hi there!", "I'm a bot!", "Beep boop!"]; // Messages bot can send
+           const WALK_RADIUS = 10; // Walking radius in blocks
+           const WALK_INTERVAL = 15000; // Walk every 15 seconds
+           const JUMP_INTERVAL = 60000; // Jump every 60 seconds
+           // ----------------
+
+           let bot;
+
+           function createBot() {
+            bot = mineflayer.createBot({
+             host: SERVER,
+             port: PORT,
+             username: USERNAME
+            });
+
+            bot.loadPlugin(pathfinder);
+
+            bot.on('spawn', () => {
+             console.log('Bot spawned!');
+
+             const mcData = require('minecraft-data')(bot.version);
+             const defaultMove = new Movements(bot, mcData);
+             bot.pathfinder.setMovements(defaultMove);
+
+             // Walk randomly every WALK_INTERVAL
+             setInterval(() => {
+              const x = bot.entity.position.x + (Math.random() - 0.5) * WALK_RADIUS * 2;
+              const z = bot.entity.position.z + (Math.random() - 0.5) * WALK_RADIUS * 2;
+              const y = bot.entity.position.y;
+              const goal = new goals.GoalBlock(Math.floor(x), Math.floor(y), Math.floor(z));
+              bot.pathfinder.setGoal(goal);
+             }, WALK_INTERVAL);
+
+             // Jump randomly every JUMP_INTERVAL
+             setInterval(() => {
+              bot.setControlState('jump', true);
+              setTimeout(() => bot.setControlState('jump', false), 500);
+             }, JUMP_INTERVAL);
+
+             // Send random chat every 30 seconds
+             setInterval(() => {
+              const msg = CHAT_MESSAGES[Math.floor(Math.random() * CHAT_MESSAGES.length)];
+              bot.chat(msg);
+             }, 30000);
+            });
+
+            bot.on('end', () => {
+             console.log('Bot disconnected, reconnecting in 5 seconds...');
+             setTimeout(createBot, 5000); // Auto-reconnect
+            });
+
+            bot.on('error', err => console.log('Error:', err));
+           }
+
+           createBot();
+          EOF
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          npm init -y
+          npm install mineflayer mineflayer-pathfinder minecraft-data
+
+      - name: Start Minecraft Bot (300m runtime)
+        shell: bash
+        run: |
+          timeout 18000 node ks-bot.js || true
+
+      - name: Restart Workflow (every 5h)
+        uses: benc-uk/workflow-dispatch@v1
+        if: ${{ always() }}
+        with:
+          workflow: Minecraft Java Bot No 1 by ks_warrior
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
