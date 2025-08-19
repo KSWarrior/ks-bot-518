@@ -16,7 +16,7 @@ concurrency:
 jobs:
   run-mc-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 305
+    timeout-minutes: 85
 
     steps:
       - name: Checkout repository
@@ -111,7 +111,13 @@ jobs:
       - name: Start Minecraft Bot (300m runtime)
         shell: bash
         run: |
-          timeout 18000 node ks-bot.js || true
+          nohup node ks-bot.js > bot.log 2>&1 &
+
+      - name: Start Minecraft Bot (300m runtime)
+        shell: bash
+        run: |
+          sleep 5000
+          
       - name: Restart Workflow (every 5h)
         uses: benc-uk/workflow-dispatch@v1
         if: ${{ always() }}
