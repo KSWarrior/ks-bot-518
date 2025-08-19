@@ -38,7 +38,7 @@ jobs:
             host: 'aerio_smp.aternos.me',
             port: 29538,
             username: 'Player1',
-            version: '1.21.8'
+            version: '1.21.4'
           })
 
           bot.loadPlugin(pathfinder)
