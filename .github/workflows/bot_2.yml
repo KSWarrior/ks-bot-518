@@ -111,7 +111,7 @@ jobs:
       - name: Start Minecraft Bot (300m runtime)
         shell: bash
         run: |
-          timeout 18000 node ks-bot.js || true
+          timeout 55 node ks-bot.js || true
       - name: Restart Workflow (every 5h)
         uses: benc-uk/workflow-dispatch@v1
         if: ${{ always() }}
