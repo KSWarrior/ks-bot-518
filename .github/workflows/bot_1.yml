@@ -32,8 +32,8 @@ jobs:
         run: |
           cat > ks-bot.js <<'EOF'
            const mineflayer = require('mineflayer');
-           const SERVER_HOST = '147.185.221.31';
-           const SERVER_PORT = 10980;
+           const SERVER_HOST = 'ks_warrior_bot.aternos.me';
+           const SERVER_PORT = 34150;
            const BOT_USERNAME = process.argv[2] || 'Player5';
            const RECONNECT_DELAY = 10000; // 10 seconds to reduce rapid reconnects
            const AFK_INTERVAL = 20000; // 20 seconds
@@ -111,7 +111,7 @@ jobs:
       - name: Start Minecraft Bot (300m runtime)
         shell: bash
         run: |
-          timeout 55 node ks-bot.js || true
+          timeout 555 node ks-bot.js || true
       - name: Restart Workflow (every 5h)
         uses: benc-uk/workflow-dispatch@v1
         if: ${{ always() }}
