@@ -34,8 +34,8 @@ jobs:
            const mineflayer = require('mineflayer');
            const dns = require('dns');
 
-           const SERVER_HOST = '185.107.193.163';
-           const SERVER_PORT = 34150;
+           const SERVER_HOST = 'aerio_smp.aternos.me';
+           const SERVER_PORT = 29538;
            const BOT_USERNAME = process.argv[2] || 'Player5';
            const RECONNECT_DELAY = 60000; // 1 min for Aternos safety
            const AFK_INTERVAL = 20000; // 20 seconds
